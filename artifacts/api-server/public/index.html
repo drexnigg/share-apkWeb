@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Share Booster</title>
+    <link rel="icon" href="/assets/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,7 +17,7 @@
     <div id="auth-screen" class="screen">
       <div class="auth-card">
         <div class="brand">
-          <div class="brand-mark">SB</div>
+          <img class="brand-logo" src="/assets/icon.png" alt="Share Booster" />
           <div>
             <h1 class="brand-name">Share Booster</h1>
             <p class="brand-tag">Fast, accurate, real-time post amplifier</p>
@@ -51,6 +52,11 @@
           </label>
           <button type="submit" class="primary">Sign in</button>
           <p class="error" id="login-error"></p>
+          <p class="auth-hint">
+            Admin? Sign in with username <strong>admin</strong> and the default
+            password <strong>admin123</strong> — then change it from the admin
+            panel.
+          </p>
         </form>
 
         <form id="register-form" class="auth-form">
@@ -79,25 +85,38 @@
           </label>
           <button type="submit" class="primary">Create account</button>
           <p class="error" id="register-error"></p>
+          <p class="info" id="register-info"></p>
+          <p class="auth-hint">
+            New accounts must be approved by an administrator before they can
+            sign in.
+          </p>
         </form>
 
-        <p class="auth-foot">
-          Your accounts and credentials stay on this server. No external services.
-        </p>
+        <div class="apk-banner">
+          <div>
+            <strong>Get the Android app</strong>
+            <p>Download Share Booster APK to your phone.</p>
+          </div>
+          <a id="apk-download" class="ghost" href="#" target="_blank" rel="noopener">Download APK</a>
+        </div>
       </div>
     </div>
 
     <div id="app-screen" class="screen hidden">
       <header class="topbar">
         <div class="brand">
-          <div class="brand-mark">SB</div>
+          <img class="brand-logo" src="/assets/icon.png" alt="Share Booster" />
           <div>
             <h1 class="brand-name">Share Booster</h1>
             <p class="brand-tag">Real-time post amplifier</p>
           </div>
         </div>
         <div class="user-chip">
+          <span id="user-role-pill" class="role-pill"></span>
           <span id="user-name">…</span>
+          <button id="apk-download-top" class="ghost small">APK</button>
+          <button id="change-pw-btn" class="ghost small">Change password</button>
+          <button id="admin-toggle-btn" class="ghost small hidden">Admin</button>
           <button id="logout-btn" class="ghost">Sign out</button>
         </div>
       </header>
@@ -187,10 +206,45 @@ c_user=...; xs=...; fr=...;"
             </p>
           </div>
         </section>
+
+        <section id="admin-card" class="card wide hidden">
+          <div class="card-head">
+            <h2>Admin — manage users</h2>
+            <button id="refresh-users-btn" class="ghost small">Refresh</button>
+          </div>
+          <p class="muted">
+            Approve, reject or remove users. Pending registrations cannot sign
+            in until you approve them here.
+          </p>
+          <div id="users-list" class="users">
+            <p class="muted small">Loading…</p>
+          </div>
+        </section>
       </main>
       <footer class="foot">
         Share Booster — runs entirely on your deployment. Use responsibly.
       </footer>
+    </div>
+
+    <div id="modal" class="modal hidden">
+      <div class="modal-card">
+        <h3 id="modal-title">Change password</h3>
+        <form id="change-pw-form">
+          <label>
+            <span>Current password</span>
+            <input type="password" name="current" required />
+          </label>
+          <label>
+            <span>New password</span>
+            <input type="password" name="next" minlength="6" required />
+          </label>
+          <p class="error" id="modal-error"></p>
+          <div class="row">
+            <button type="submit" class="primary">Update password</button>
+            <button type="button" class="ghost" id="modal-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script src="/app.js"></script>

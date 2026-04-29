@@ -1,13 +1,25 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  const APK_URL =
+    "https://github.com/drexnigg/share-apkWeb/releases/latest/download/share-booster.apk";
+
   const authScreen = $("auth-screen");
   const appScreen = $("app-screen");
   const userNameEl = $("user-name");
+  const rolePillEl = $("user-role-pill");
+  const adminToggleBtn = $("admin-toggle-btn");
+  const adminCard = $("admin-card");
   const loginForm = $("login-form");
   const registerForm = $("register-form");
   const loginError = $("login-error");
   const registerError = $("register-error");
+  const registerInfo = $("register-info");
+
+  $("apk-download").href = APK_URL;
+  $("apk-download-top").addEventListener("click", () => {
+    window.open(APK_URL, "_blank", "noopener");
+  });
 
   const tabs = document.querySelectorAll(".tab");
   tabs.forEach((tab) => {
@@ -42,10 +54,28 @@
     return data;
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function showApp(user) {
     authScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
     userNameEl.textContent = user.username;
+    if (user.role === "admin") {
+      rolePillEl.textContent = "ADMIN";
+      rolePillEl.classList.add("admin");
+      adminToggleBtn.classList.remove("hidden");
+    } else {
+      rolePillEl.textContent = "";
+      rolePillEl.classList.remove("admin");
+      adminToggleBtn.classList.add("hidden");
+      adminCard.classList.add("hidden");
+    }
     refreshState();
     connectStream();
   }
@@ -80,6 +110,7 @@
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     registerError.textContent = "";
+    registerInfo.textContent = "";
     const fd = new FormData(registerForm);
     try {
       const data = await api("/auth/register", {
@@ -89,7 +120,10 @@
           password: fd.get("password"),
         }),
       });
-      showApp(data.user);
+      registerInfo.textContent =
+        data.message ||
+        "Account created. Wait for an administrator to approve it.";
+      registerForm.reset();
     } catch (err) {
       registerError.textContent = err.message;
     }
@@ -98,6 +132,116 @@
   $("logout-btn").addEventListener("click", async () => {
     await api("/auth/logout", { method: "POST" }).catch(() => {});
     showAuth();
+  });
+
+  /* ===== Admin panel ===== */
+  const usersListEl = $("users-list");
+
+  adminToggleBtn.addEventListener("click", () => {
+    adminCard.classList.toggle("hidden");
+    if (!adminCard.classList.contains("hidden")) loadUsers();
+  });
+
+  $("refresh-users-btn").addEventListener("click", loadUsers);
+
+  async function loadUsers() {
+    usersListEl.innerHTML = '<p class="muted small">Loading…</p>';
+    try {
+      const data = await api("/admin/users");
+      renderUsers(data.users || []);
+    } catch (err) {
+      usersListEl.innerHTML = `<p class="error">${escapeHtml(err.message)}</p>`;
+    }
+  }
+
+  function renderUsers(users) {
+    if (users.length === 0) {
+      usersListEl.innerHTML = '<p class="muted small">No users yet.</p>';
+      return;
+    }
+    usersListEl.innerHTML = "";
+    users.sort((a, b) => {
+      const order = { pending: 0, approved: 1, rejected: 2 };
+      const sa = order[a.status] ?? 3;
+      const sb = order[b.status] ?? 3;
+      if (sa !== sb) return sa - sb;
+      return b.createdAt - a.createdAt;
+    });
+    for (const u of users) {
+      const row = document.createElement("div");
+      row.className = "user-row";
+      const created = new Date(u.createdAt).toLocaleString();
+      const isAdmin = u.role === "admin";
+      const actions = isAdmin
+        ? '<span class="muted small">Administrator</span>'
+        : `
+        ${u.status !== "approved" ? `<button class="primary small" data-approve="${u.id}">Approve</button>` : ""}
+        ${u.status !== "rejected" ? `<button class="ghost small" data-reject="${u.id}">Reject</button>` : ""}
+        <button class="danger small" data-del="${u.id}">Delete</button>
+      `;
+      row.innerHTML = `
+        <div class="user-info">
+          <div class="avatar">${escapeHtml(u.username[0]?.toUpperCase() || "?")}</div>
+          <div>
+            <div class="account-name">${escapeHtml(u.username)} ${isAdmin ? '<span class="role-pill admin small">ADMIN</span>' : ""}</div>
+            <div class="account-meta">Joined ${created}</div>
+          </div>
+        </div>
+        <div class="account-actions">
+          <span class="badge ${u.status}">${u.status}</span>
+          ${actions}
+        </div>
+      `;
+      usersListEl.appendChild(row);
+    }
+    usersListEl.querySelectorAll("[data-approve]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        await api(`/admin/users/${b.dataset.approve}/approve`, { method: "POST" }).catch(() => {});
+        loadUsers();
+      }),
+    );
+    usersListEl.querySelectorAll("[data-reject]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        await api(`/admin/users/${b.dataset.reject}/reject`, { method: "POST" }).catch(() => {});
+        loadUsers();
+      }),
+    );
+    usersListEl.querySelectorAll("[data-del]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        if (!confirm("Delete this user permanently?")) return;
+        await api(`/admin/users/${b.dataset.del}`, { method: "DELETE" }).catch(() => {});
+        loadUsers();
+      }),
+    );
+  }
+
+  /* ===== Change password modal ===== */
+  const modal = $("modal");
+  $("change-pw-btn").addEventListener("click", () => {
+    modal.classList.remove("hidden");
+    $("modal-error").textContent = "";
+    $("change-pw-form").reset();
+  });
+  $("modal-cancel").addEventListener("click", () => modal.classList.add("hidden"));
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.classList.add("hidden");
+  });
+  $("change-pw-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    try {
+      await api("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword: fd.get("current"),
+          newPassword: fd.get("next"),
+        }),
+      });
+      modal.classList.add("hidden");
+      addLog({ level: "success", message: "Password updated.", ts: Date.now() });
+    } catch (err) {
+      $("modal-error").textContent = err.message;
+    }
   });
 
   /* ===== Accounts ===== */
@@ -148,14 +292,6 @@
         refreshState();
       });
     });
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
   }
 
   $("add-accounts-btn").addEventListener("click", async () => {
@@ -288,12 +424,14 @@
       const pct = Math.min(100, (ev.total / plannedTotal) * 100);
       progressBar.style.width = pct + "%";
     }
-    renderAccounts(ev.perAccount.map((a) => ({
-      id: a.name,
-      name: a.name,
-      shares: a.shares,
-      status: a.status,
-    })));
+    renderAccounts(
+      ev.perAccount.map((a) => ({
+        id: a.name,
+        name: a.name,
+        shares: a.shares,
+        status: a.status,
+      })),
+    );
   }
 
   /* ===== Live stream ===== */

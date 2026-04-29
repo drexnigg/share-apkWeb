@@ -1,0 +1,65 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & release APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate Gradle wrapper
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.7 --distribution-type bin
+
+      - name: Build debug + release APKs
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleDebug assembleRelease
+
+      - name: Rename APKs
+        run: |
+          mkdir -p artifacts-out
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts-out/share-booster-debug.apk
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts-out/share-booster.apk
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: share-booster-apk
+          path: artifacts-out/
+
+      - name: Publish "latest" release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Share Booster (latest build)
+          body: |
+            Auto-built APK from commit ${{ github.sha }}.
+
+            - share-booster.apk — release build (recommended)
+            - share-booster-debug.apk — debug build
+          files: |
+            artifacts-out/share-booster.apk
+            artifacts-out/share-booster-debug.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+          make_latest: true

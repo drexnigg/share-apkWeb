@@ -66,6 +66,28 @@ export function requireAuth(
     res.status(401).json({ error: "Not authenticated" });
     return;
   }
+  if (user.status !== "approved") {
+    res.status(403).json({ error: "Account is pending admin approval" });
+    return;
+  }
+  (req as Request & { user: StoredUser }).user = user;
+  next();
+}
+
+export function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  const user = getUserFromRequest(req);
+  if (!user) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  if (user.role !== "admin") {
+    res.status(403).json({ error: "Admin access required" });
+    return;
+  }
   (req as Request & { user: StoredUser }).user = user;
   next();
 }

@@ -5,6 +5,7 @@ import {
   setSessionCookie,
 } from "../lib/auth";
 import {
+  changePassword,
   createUser,
   findUserByUsername,
   verifyPassword,
@@ -19,7 +20,12 @@ router.get("/me", (req, res) => {
     return;
   }
   res.json({
-    user: { id: user.id, username: user.username },
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      status: user.status,
+    },
   });
 });
 
@@ -35,14 +41,26 @@ router.post("/register", (req, res) => {
     res.status(400).json({ error: "Username may contain letters, numbers, _ . -" });
     return;
   }
+  if (username.toLowerCase() === "admin") {
+    res.status(400).json({ error: "Username 'admin' is reserved" });
+    return;
+  }
   if (password.length < 6) {
     res.status(400).json({ error: "Password must be at least 6 characters" });
     return;
   }
   try {
-    const user = createUser(username, password);
-    setSessionCookie(res, user.id);
-    res.json({ user: { id: user.id, username: user.username } });
+    const user = createUser(username, password, { role: "user", status: "pending" });
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        status: user.status,
+      },
+      message:
+        "Account created. An administrator must approve your account before you can sign in.",
+    });
   } catch (err) {
     res.status(409).json({ error: (err as Error).message });
   }
@@ -57,13 +75,52 @@ router.post("/login", (req, res) => {
     res.status(401).json({ error: "Invalid username or password" });
     return;
   }
+  if (user.status === "rejected") {
+    res.status(403).json({ error: "Your account was rejected by an administrator." });
+    return;
+  }
+  if (user.status !== "approved") {
+    res.status(403).json({
+      error:
+        "Your account is awaiting admin approval. Please check back soon or contact the administrator.",
+    });
+    return;
+  }
   setSessionCookie(res, user.id);
-  res.json({ user: { id: user.id, username: user.username } });
+  res.json({
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      status: user.status,
+    },
+  });
 });
 
 router.post("/logout", (_req, res) => {
   clearSessionCookie(res);
   res.json({ ok: true });
+});
+
+router.post("/change-password", (req, res) => {
+  const user = getUserFromRequest(req);
+  if (!user) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const body = req.body as { currentPassword?: unknown; newPassword?: unknown };
+  const current = typeof body.currentPassword === "string" ? body.currentPassword : "";
+  const next = typeof body.newPassword === "string" ? body.newPassword : "";
+  if (!verifyPassword(current, user.passwordHash)) {
+    res.status(401).json({ error: "Current password is incorrect" });
+    return;
+  }
+  try {
+    changePassword(user.id, next);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
+  }
 });
 
 export default router;

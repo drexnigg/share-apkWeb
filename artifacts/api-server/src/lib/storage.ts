@@ -2,16 +2,26 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
+export type UserRole = "admin" | "user";
+export type UserStatus = "pending" | "approved" | "rejected";
+
 export type StoredUser = {
   id: string;
   username: string;
   passwordHash: string;
+  role: UserRole;
+  status: UserStatus;
   createdAt: number;
+  approvedAt?: number;
+  approvedBy?: string;
 };
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 const SECRET_FILE = path.join(DATA_DIR, ".secret");
+
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "admin123";
 
 function ensureDataDir(): void {
   if (!fs.existsSync(DATA_DIR)) {
@@ -38,7 +48,13 @@ function loadUsers(): StoredUser[] {
   try {
     const raw = fs.readFileSync(USERS_FILE, "utf8");
     const parsed = JSON.parse(raw) as StoredUser[];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    // backfill role/status for users created before these fields existed
+    return parsed.map((u) => ({
+      ...u,
+      role: u.role ?? "user",
+      status: u.status ?? "approved",
+    }));
   } catch {
     return [];
   }
@@ -76,7 +92,15 @@ export function findUserById(id: string): StoredUser | null {
   return users.find((u) => u.id === id) ?? null;
 }
 
-export function createUser(username: string, password: string): StoredUser {
+export function listAllUsers(): StoredUser[] {
+  return loadUsers();
+}
+
+export function createUser(
+  username: string,
+  password: string,
+  opts: { role?: UserRole; status?: UserStatus } = {},
+): StoredUser {
   const users = loadUsers();
   const trimmed = username.trim();
   const exists = users.some(
@@ -89,9 +113,48 @@ export function createUser(username: string, password: string): StoredUser {
     id: randomBytes(8).toString("hex"),
     username: trimmed,
     passwordHash: hashPassword(password),
+    role: opts.role ?? "user",
+    status: opts.status ?? "pending",
     createdAt: Date.now(),
   };
   users.push(user);
   saveUsers(users);
   return user;
+}
+
+export function updateUser(
+  id: string,
+  patch: Partial<Pick<StoredUser, "status" | "approvedAt" | "approvedBy" | "passwordHash">>,
+): StoredUser | null {
+  const users = loadUsers();
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx < 0) return null;
+  users[idx] = { ...users[idx], ...patch } as StoredUser;
+  saveUsers(users);
+  return users[idx] ?? null;
+}
+
+export function deleteUser(id: string): boolean {
+  const users = loadUsers();
+  const target = users.find((u) => u.id === id);
+  if (!target || target.role === "admin") return false;
+  const filtered = users.filter((u) => u.id !== id);
+  saveUsers(filtered);
+  return filtered.length !== users.length;
+}
+
+export function ensureDefaultAdmin(): StoredUser {
+  const users = loadUsers();
+  const existing = users.find((u) => u.role === "admin");
+  if (existing) return existing;
+  return createUser(DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_PASSWORD, {
+    role: "admin",
+    status: "approved",
+  });
+}
+
+export function changePassword(id: string, newPassword: string): boolean {
+  if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
+  const updated = updateUser(id, { passwordHash: hashPassword(newPassword) });
+  return updated !== null;
 }
