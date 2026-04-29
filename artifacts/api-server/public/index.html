@@ -2,9 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
     <title>Share Booster</title>
     <link rel="icon" href="/assets/icon.png" />
+    <link rel="apple-touch-icon" href="/assets/icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,239 +16,70 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div id="auth-screen" class="screen">
-      <div class="auth-card">
-        <div class="brand">
-          <img class="brand-logo" src="/assets/icon.png" alt="Share Booster" />
-          <div>
-            <h1 class="brand-name">Share Booster</h1>
-            <p class="brand-tag">Fast, accurate, real-time post amplifier</p>
-          </div>
-        </div>
-
-        <div class="tabs">
-          <button class="tab active" data-tab="login">Sign in</button>
-          <button class="tab" data-tab="register">Create account</button>
-        </div>
-
-        <form id="login-form" class="auth-form active">
-          <label>
-            <span>Username</span>
-            <input
-              type="text"
-              name="username"
-              autocomplete="username"
-              required
-              placeholder="your username"
-            />
-          </label>
-          <label>
-            <span>Password</span>
-            <input
-              type="password"
-              name="password"
-              autocomplete="current-password"
-              required
-              placeholder="••••••••"
-            />
-          </label>
-          <button type="submit" class="primary">Sign in</button>
-          <p class="error" id="login-error"></p>
-          <p class="auth-hint">
-            Admin? Sign in with username <strong>admin</strong> and the default
-            password <strong>admin123</strong> — then change it from the admin
-            panel.
-          </p>
-        </form>
-
-        <form id="register-form" class="auth-form">
-          <label>
-            <span>Username</span>
-            <input
-              type="text"
-              name="username"
-              autocomplete="username"
-              required
-              minlength="3"
-              maxlength="32"
-              placeholder="pick a username"
-            />
-          </label>
-          <label>
-            <span>Password</span>
-            <input
-              type="password"
-              name="password"
-              autocomplete="new-password"
-              required
-              minlength="6"
-              placeholder="at least 6 characters"
-            />
-          </label>
-          <button type="submit" class="primary">Create account</button>
-          <p class="error" id="register-error"></p>
-          <p class="info" id="register-info"></p>
-          <p class="auth-hint">
-            New accounts must be approved by an administrator before they can
-            sign in.
-          </p>
-        </form>
-
-        <div class="apk-banner">
-          <div>
-            <strong>Get the Android app</strong>
-            <p>Download Share Booster APK to your phone.</p>
-          </div>
-          <a id="apk-download" class="ghost" href="#" target="_blank" rel="noopener">Download APK</a>
-        </div>
+    <!-- Splash screen -->
+    <div id="splash" class="splash">
+      <div class="splash-inner">
+        <img class="splash-logo" src="/assets/icon.png" alt="" />
+        <div class="splash-name">Share Booster</div>
+        <div class="splash-tag">Real-time post amplifier</div>
+        <div class="splash-spinner"></div>
       </div>
     </div>
 
-    <div id="app-screen" class="screen hidden">
-      <header class="topbar">
-        <div class="brand">
-          <img class="brand-logo" src="/assets/icon.png" alt="Share Booster" />
-          <div>
-            <h1 class="brand-name">Share Booster</h1>
-            <p class="brand-tag">Real-time post amplifier</p>
-          </div>
-        </div>
-        <div class="user-chip">
-          <span id="user-role-pill" class="role-pill"></span>
-          <span id="user-name">…</span>
-          <button id="apk-download-top" class="ghost small">APK</button>
-          <button id="change-pw-btn" class="ghost small">Change password</button>
-          <button id="admin-toggle-btn" class="ghost small hidden">Admin</button>
-          <button id="logout-btn" class="ghost">Sign out</button>
-        </div>
-      </header>
-
-      <main class="layout">
-        <section class="card">
-          <h2>1. Add Facebook accounts</h2>
-          <p class="muted">
-            Paste one or more Facebook cookie strings — one per line. Share Booster
-            extracts the access token and shows the real account name for each
-            cookie you add.
-          </p>
-          <textarea
-            id="cookies-input"
-            rows="6"
-            placeholder="c_user=...; xs=...; fr=...;
-c_user=...; xs=...; fr=...;"
-          ></textarea>
-          <div class="row">
-            <button id="add-accounts-btn" class="primary">Add accounts</button>
-            <button id="clear-accounts-btn" class="ghost">Clear all</button>
-            <span id="add-status" class="status-text"></span>
-          </div>
-
-          <h3 class="section-title">Loaded accounts</h3>
-          <div id="accounts-list" class="accounts">
-            <p class="muted small">No accounts loaded yet.</p>
-          </div>
-        </section>
-
-        <section class="card">
-          <h2>2. Boost a post</h2>
-          <label>
-            <span>Post link</span>
-            <input
-              type="url"
-              id="link-input"
-              placeholder="https://www.facebook.com/..."
-            />
-          </label>
-          <label>
-            <span>Number of shares (max 5000)</span>
-            <input
-              type="number"
-              id="total-input"
-              min="1"
-              max="5000"
-              value="100"
-            />
-          </label>
-          <div class="row">
-            <button id="start-btn" class="primary big">Start boosting</button>
-            <button id="stop-btn" class="danger" disabled>Stop</button>
-          </div>
-
-          <div class="stats">
-            <div class="stat">
-              <span class="stat-label">Success</span>
-              <span class="stat-value" id="stat-success">0</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Failed</span>
-              <span class="stat-value" id="stat-failed">0</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Total</span>
-              <span class="stat-value" id="stat-total">0</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Elapsed</span>
-              <span class="stat-value" id="stat-elapsed">0s</span>
-            </div>
-          </div>
-          <div class="progress">
-            <div class="progress-bar" id="progress-bar"></div>
-          </div>
-        </section>
-
-        <section class="card wide">
-          <div class="card-head">
-            <h2>3. Live activity</h2>
-            <button id="clear-logs-btn" class="ghost small">Clear logs</button>
-          </div>
-          <div id="logs" class="logs">
-            <p class="muted small">
-              Live share results will stream here as they happen.
-            </p>
-          </div>
-        </section>
-
-        <section id="admin-card" class="card wide hidden">
-          <div class="card-head">
-            <h2>Admin — manage users</h2>
-            <button id="refresh-users-btn" class="ghost small">Refresh</button>
-          </div>
-          <p class="muted">
-            Approve, reject or remove users. Pending registrations cannot sign
-            in until you approve them here.
-          </p>
-          <div id="users-list" class="users">
-            <p class="muted small">Loading…</p>
-          </div>
-        </section>
-      </main>
-      <footer class="foot">
-        Share Booster — runs entirely on your deployment. Use responsibly.
-      </footer>
+    <!-- Auth shell -->
+    <div id="auth-shell" class="screen hidden">
+      <div class="auth-card" id="auth-card"></div>
     </div>
 
+    <!-- App shell (sidebar + main) -->
+    <div id="app-shell" class="app-shell hidden">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+          <img src="/assets/icon.png" alt="" />
+          <div>
+            <div class="sb-name">Share Booster</div>
+            <div class="sb-tag">v1.0</div>
+          </div>
+        </div>
+        <nav class="nav" id="nav"></nav>
+        <div class="sidebar-foot">
+          <a id="apk-link" class="apk-mini" href="#" target="_blank" rel="noopener">
+            <span class="apk-icon" data-icon="smartphone"></span>
+            <span>Get the Android app</span>
+          </a>
+        </div>
+      </aside>
+
+      <div class="main-wrap">
+        <header class="topbar">
+          <button class="icon-btn ghost menu-btn" id="menu-btn" aria-label="Menu">
+            <span data-icon="menu"></span>
+          </button>
+          <div class="page-title" id="page-title">Dashboard</div>
+          <div class="user-chip">
+            <span id="role-pill" class="role-pill"></span>
+            <span class="user-avatar" id="user-avatar"></span>
+            <span class="user-name" id="user-name"></span>
+          </div>
+        </header>
+
+        <main id="page-root" class="page"></main>
+
+        <footer class="foot">
+          Share Booster runs entirely on your own deployment. Use responsibly.
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modal -->
     <div id="modal" class="modal hidden">
-      <div class="modal-card">
-        <h3 id="modal-title">Change password</h3>
-        <form id="change-pw-form">
-          <label>
-            <span>Current password</span>
-            <input type="password" name="current" required />
-          </label>
-          <label>
-            <span>New password</span>
-            <input type="password" name="next" minlength="6" required />
-          </label>
-          <p class="error" id="modal-error"></p>
-          <div class="row">
-            <button type="submit" class="primary">Update password</button>
-            <button type="button" class="ghost" id="modal-cancel">Cancel</button>
-          </div>
-        </form>
-      </div>
+      <div class="modal-card" id="modal-card"></div>
     </div>
 
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/icons.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>
