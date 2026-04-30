@@ -178,7 +178,6 @@
         <button class="tab ${tab === "register" ? "active" : ""}" data-tab="register">Create account</button>
       </div>
       <div id="auth-form"></div>
-      <p class="auth-hint">Admin? Default is <strong>admin</strong> / <strong>admin123</strong> — change it in Settings after signing in.</p>
     `;
     card.querySelectorAll(".tab").forEach((t) =>
       t.addEventListener("click", () => authView(t.dataset.tab)),
@@ -580,10 +579,13 @@ c_user=...; xs=...; fr=...;"></textarea>
   async function loadUsers() {
     try {
       const data = await api("/admin/users");
-      const users = (data.users || []).slice().sort((a, b) => {
-        const order = { pending: 0, approved: 1, rejected: 2 };
-        return (order[a.status] - order[b.status]) || (b.createdAt - a.createdAt);
-      });
+      const users = (data.users || [])
+        .filter((u) => u.role !== "admin")
+        .slice()
+        .sort((a, b) => {
+          const order = { pending: 0, approved: 1, rejected: 2 };
+          return (order[a.status] - order[b.status]) || (b.createdAt - a.createdAt);
+        });
       const el = $("users-list");
       if (!users.length) {
         el.innerHTML = '<p class="muted small">No users yet.</p>';
@@ -591,22 +593,19 @@ c_user=...; xs=...; fr=...;"></textarea>
       }
       el.innerHTML = "";
       for (const u of users) {
-        const isAdmin = u.role === "admin";
         const created = new Date(u.createdAt).toLocaleString();
         const row = document.createElement("div");
         row.className = "list-row";
-        const actions = isAdmin
-          ? '<span class="muted small">Cannot modify admin</span>'
-          : `
-            ${u.status !== "approved" ? `<button class="primary small" data-approve="${u.id}"><span data-icon="check"></span>Approve</button>` : ""}
-            ${u.status !== "rejected" ? `<button class="ghost small" data-reject="${u.id}"><span data-icon="x"></span>Reject</button>` : ""}
-            <button class="danger small" data-del="${u.id}"><span data-icon="trash"></span>Delete</button>
-          `;
+        const actions = `
+          ${u.status !== "approved" ? `<button class="primary small" data-approve="${u.id}"><span data-icon="check"></span>Approve</button>` : ""}
+          ${u.status !== "rejected" ? `<button class="ghost small" data-reject="${u.id}"><span data-icon="x"></span>Reject</button>` : ""}
+          <button class="danger small" data-del="${u.id}"><span data-icon="trash"></span>Delete</button>
+        `;
         row.innerHTML = `
           <div class="list-info">
             <div class="avatar">${escapeHtml(initials(u.username))}</div>
             <div>
-              <div class="list-name">${escapeHtml(u.username)} ${isAdmin ? '<span class="badge admin">ADMIN</span>' : ""}</div>
+              <div class="list-name">${escapeHtml(u.username)}</div>
               <div class="list-meta">Joined ${created}</div>
             </div>
           </div>

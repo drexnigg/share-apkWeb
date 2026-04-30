@@ -13,14 +13,7 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            val prefs = getSharedPreferences(SetupActivity.PREFS, MODE_PRIVATE)
-            val url = prefs.getString(SetupActivity.KEY_URL, null)
-            val intent = if (url.isNullOrBlank()) {
-                Intent(this, SetupActivity::class.java)
-            } else {
-                Intent(this, MainActivity::class.java)
-            }
-            startActivity(intent)
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         }, 1400)
     }

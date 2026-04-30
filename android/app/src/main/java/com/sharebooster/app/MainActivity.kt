@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DownloadManager
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
@@ -35,19 +34,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var errorText: TextView
     private lateinit var retryBtn: Button
     private lateinit var changeUrlBtn: Button
-    private lateinit var serverUrl: String
+    private val serverUrl: String = BuildConfig.WEB_URL
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val prefs = getSharedPreferences(SetupActivity.PREFS, MODE_PRIVATE)
-        serverUrl = prefs.getString(SetupActivity.KEY_URL, null) ?: run {
-            startActivity(Intent(this, SetupActivity::class.java))
-            finish()
-            return
-        }
 
         progress = findViewById(R.id.progress)
         refresh = findViewById(R.id.swipe_refresh)
@@ -56,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         errorText = findViewById(R.id.error_text)
         retryBtn = findViewById(R.id.retry_btn)
         changeUrlBtn = findViewById(R.id.change_url_btn)
+        // The "change URL" button is no longer needed; the URL is baked in.
+        changeUrlBtn.visibility = View.GONE
 
         val s: WebSettings = webView.settings
         s.javaScriptEnabled = true
@@ -104,10 +98,6 @@ class MainActivity : AppCompatActivity() {
             errorPanel.visibility = View.GONE
             webView.loadUrl(serverUrl)
         }
-        changeUrlBtn.setOnClickListener {
-            startActivity(Intent(this, SetupActivity::class.java))
-            finish()
-        }
 
         if (savedInstanceState == null) {
             webView.loadUrl(serverUrl)
@@ -130,10 +120,6 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_reload -> { webView.reload(); true }
-            R.id.action_change_server -> {
-                startActivity(Intent(this, SetupActivity::class.java))
-                finish(); true
-            }
             R.id.action_about -> {
                 AlertDialog.Builder(this)
                     .setTitle(R.string.app_name)
