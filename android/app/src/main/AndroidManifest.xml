@@ -11,14 +11,27 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.ShareBooster"
         android:usesCleartextTraffic="true">
+
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
-            android:configChanges="orientation|screenSize|keyboardHidden">
+            android:theme="@style/Theme.ShareBooster.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".SetupActivity"
+            android:exported="false"
+            android:label="@string/setup_title"
+            android:theme="@style/Theme.ShareBooster" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/Theme.ShareBooster" />
     </application>
 </manifest>

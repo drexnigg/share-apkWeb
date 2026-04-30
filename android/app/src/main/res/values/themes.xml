@@ -4,4 +4,8 @@
         <item name="android:statusBarColor">#0F172A</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
+    <style name="Theme.ShareBooster.Splash" parent="Theme.ShareBooster">
+        <item name="android:statusBarColor">#0F172A</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+    </style>
 </resources>

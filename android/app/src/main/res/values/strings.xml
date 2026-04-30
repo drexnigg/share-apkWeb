@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Share Booster</string>
+    <string name="splash_tagline">Real-time post amplifier</string>
+    <string name="splash_footer">Loading…</string>
+
+    <string name="setup_title">Welcome to Share Booster</string>
+    <string name="setup_subtitle">Enter the address of your Share Booster server. This is the URL where you deployed the website (Render, Railway, your own domain, etc.).</string>
+    <string name="setup_url_label">Server URL</string>
+    <string name="setup_url_hint">https://your-app.onrender.com</string>
+    <string name="setup_save">Save and continue</string>
+    <string name="setup_invalid">Please enter a valid URL.</string>
+    <string name="setup_help">You can change this later from the in-app menu.</string>
+
+    <string name="error_title">Could not connect</string>
+    <string name="error_could_not_reach">We could not reach %1$s.\nMake sure the server is deployed and the URL is correct.</string>
+    <string name="error_retry">Try again</string>
+    <string name="error_change_url">Change server URL</string>
+
+    <string name="menu_reload">Reload</string>
+    <string name="menu_change_server">Change server URL</string>
+    <string name="menu_about">About</string>
+    <string name="about_message">Share Booster Android client.\nServer: %1$s</string>
 </resources>
